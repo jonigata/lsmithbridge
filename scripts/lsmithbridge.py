@@ -9,16 +9,9 @@ from modules import scripts, script_callbacks, shared
 from modules.processing import Processed, create_infotext
 from PIL import Image, ImageDraw
 from io import BytesIO
+import base64
 
 default_url = "http://localhost:8000/api/images"
-
-def get_images_from_urls(urls):
-    images = []
-    for url in urls:
-        response = requests.get(url)
-        image = Image.open(BytesIO(response.content))
-        images.append(image)
-    return images
 
 class LSmithBridgeScript(scripts.Script):
     def title(self):
@@ -57,8 +50,8 @@ class LSmithBridgeScript(scripts.Script):
             raise Exception(f"Failed to merge images, status code: {response.status_code}")
 
         result = json.loads(response.text)
-        filenames = result["data"]["images"].keys()
-        # filenames_str = ", ".join([str(filename) for filename in filenames])
-
-        images = get_images_from_urls(url + "/txt2img/" + fn for fn in filenames)
+        images = []
+        for res in result["data"]["images"].keys():
+            image = Image.open(BytesIO(base64.b64decode(res)))
+            images.append(image)
         return Processed(p, images)
